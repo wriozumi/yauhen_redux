@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
 
-import { addTask, removeTask, completeTask } from "../../actions/actionCreator";
+import { addTask, removeTask, completeTask, changeFilter } from "../../actions/actionCreator";
 
 import ToDoInput from "../../components/todo-input/todo-input.jsx";
 import ToDoList from "../../components/todo-list/todo-list.jsx";
@@ -11,7 +11,6 @@ import "./todo.css";
 
 class ToDo extends Component {
   state = {
-    activeFilter: "all",
     taskText: ""
   };
 
@@ -32,11 +31,24 @@ class ToDo extends Component {
     }
   };
 
+  filterTasks = (tasks, activeFilter) => {
+    switch (activeFilter) {
+      case 'completed':
+        return tasks.filter(task => task.isCompleted);
+        break;
+      case 'active':
+        return tasks.filter(task => !task.isCompleted);
+        break;
+      default:
+        return tasks;
+    }
+  }
+
   render() {
     const { activeFilter, taskText } = this.state;
-    const { tasks, removeTask, completeTask } = this.props;
+    const { tasks, removeTask, completeTask, filters, changeFilter } = this.props;
     const isTasksExist = tasks && tasks.length > 0;
-
+    const filteredTasks = this.filterTasks(tasks, filters)
     return (
       <div className="todo-wrapper">
         <ToDoInput
@@ -44,16 +56,17 @@ class ToDo extends Component {
           onChange={this.handleInputChange}
           value={taskText}
         />
-        {isTasksExist && <ToDoList completeTask={completeTask} removeTask={removeTask} tasksList={tasks} />}
+        {isTasksExist && <ToDoList completeTask={completeTask} removeTask={removeTask} tasksList={filteredTasks} />}
         {isTasksExist && (
-          <Footer amount={tasks.length} activeFilter={activeFilter} />
+          <Footer changeFilter={changeFilter} amount={tasks.length} activeFilter={filters} />
         )}
       </div>
     );
   }
 }
 
-export default connect(
-  state => ({ tasks: state.tasks }),
-  { addTask, removeTask, completeTask }
-)(ToDo);
+export default connect(({ tasks, filters }) => ({
+  tasks,
+  filters
+}),
+  { addTask, removeTask, completeTask, changeFilter })(ToDo);
